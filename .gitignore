@@ -1,0 +1,15 @@
+# Ignore training files
+*.pt
+*.bin
+*.pth
+*.ipynb
+*.json
+scheduler.pt
+optimizer.pt
+rng_state.pth
+training_args.bin
+
+# Ignore Jupyter stuff
+.ipynb_checkpoints/
+__pycache__/
+*.log
