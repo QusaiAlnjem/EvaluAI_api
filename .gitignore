@@ -4,6 +4,7 @@
 *.pth
 *.ipynb
 *.json
+!**/config.json
 scheduler.pt
 optimizer.pt
 rng_state.pth
