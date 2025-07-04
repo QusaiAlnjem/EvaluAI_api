@@ -36,23 +36,52 @@ def load_models():
   global AspectModel, SentimentModel, ClassificationModel
   
   try:
-    logger.info("Loading models...")
-    
-    # Load tokenizers
-    tokenizer_sent = BertTokenizer.from_pretrained("bert-base-uncased")
-    tokenizer_asp = BertTokenizerFast.from_pretrained("bert-base-uncased")
-    tokenizer_cls = AutoTokenizer.from_pretrained("roberta-base")
-    
-    # Load models
-    AspectModel = BertForTokenClassification.from_pretrained("absa_model/checkpoint-10456")
-    SentimentModel = BertForSequenceClassification.from_pretrained("aspect_extraction_model/checkpoint-16276")
-    ClassificationModel = AutoModelForSequenceClassification.from_pretrained("product_classifier")
+      logger.info("Starting model loading...")
+      
+      # Check if model directories exist
+      import os
+      model_paths = [
+          "absa_model/checkpoint-10456",
+          "aspect_extraction_model/checkpoint-16276", 
+          "product_classifier"
+      ]
+      
+      for path in model_paths:
+          if os.path.exists(path):
+              logger.info(f"✓ Found model directory: {path}")
+          else:
+              logger.error(f"✗ Missing model directory: {path}")
+      
+      # Load tokenizers
+      logger.info("Loading tokenizers...")
+      tokenizer_sent = BertTokenizer.from_pretrained("bert-base-uncased")
+      tokenizer_asp = BertTokenizerFast.from_pretrained("bert-base-uncased")
+      tokenizer_cls = AutoTokenizer.from_pretrained("roberta-base")
+      logger.info("✓ Tokenizers loaded")
+      
+      # Load models
+      logger.info("Loading aspect model...")
+      AspectModel = BertForTokenClassification.from_pretrained("absa_model/checkpoint-10456")
+      logger.info("✓ Aspect model loaded")
+      
+      logger.info("Loading sentiment model...")
+      SentimentModel = BertForSequenceClassification.from_pretrained("aspect_extraction_model/checkpoint-16276")
+      logger.info("✓ Sentiment model loaded")
+      
+      logger.info("Loading classification model...")
+      ClassificationModel = AutoModelForSequenceClassification.from_pretrained("product_classifier")
+      logger.info("✓ Classification model loaded")
 
-    logger.info("Models loaded successfully!")
+      logger.info("All models loaded successfully!")
       
   except Exception as e:
-    logger.error(f"Error loading models: {str(e)}")
-    raise e
+      logger.error(f"Error loading models: {str(e)}")
+      logger.error(f"Current working directory: {os.getcwd()}")
+      logger.error(f"Directory contents: {os.listdir('.')}")
+      # Don't raise - let the app start but mark models as not loaded
+      return False
+  
+  return True
 
 @app.route('/')
 def home():
@@ -92,16 +121,24 @@ def process_request(request):
 @app.route('/health', methods=['GET'])
 def health_check():
   """Health check endpoint"""
-  return jsonify({
-    'status': 'healthy',
-    'models_loaded': all([
-      tokenizer_sent is not None,
-      tokenizer_asp is not None,
-      tokenizer_cls is not None,
-      AspectModel is not None,
-      SentimentModel is not None,
-      ClassificationModel is not None,
-    ])
+ return jsonify({
+      'status': 'healthy',
+      'models_loaded': all([
+          tokenizer_sent is not None,
+          tokenizer_asp is not None,
+          tokenizer_cls is not None,
+          AspectModel is not None,
+          SentimentModel is not None,
+          ClassificationModel is not None,
+      ]),
+      'individual_models': {
+          'tokenizer_sent': tokenizer_sent is not None,
+          'tokenizer_asp': tokenizer_asp is not None,
+          'tokenizer_cls': tokenizer_cls is not None,
+          'AspectModel': AspectModel is not None,
+          'SentimentModel': SentimentModel is not None,
+          'ClassificationModel': ClassificationModel is not None,
+      }
   })
 
 @app.route('/analyze', methods=['POST'])
