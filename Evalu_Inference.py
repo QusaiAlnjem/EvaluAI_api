@@ -1,11 +1,11 @@
-import os
 import torch
-import numpy as np
+import pickle
 import pandas as pd
-from transformers import BertTokenizerFast, BertForTokenClassification, BertTokenizer, BertForSequenceClassification
+from transformers import BertTokenizerFast, BertForTokenClassification, BertTokenizer, BertForSequenceClassification, AutoModelForSequenceClassification, AutoTokenizer
 
 tokenizer_sent = BertTokenizer.from_pretrained("bert-base-uncased")
 tokenizer_asp = BertTokenizerFast.from_pretrained("bert-base-uncased")
+tokenizer_cls = AutoTokenizer.from_pretrained("roberta-base")
 
 def convert_predictions_to_aspects(text, predictions, offset_mapping, input_ids, tokenizer):
   aspects = []
@@ -97,24 +97,51 @@ def classify_sentiment(text, aspect, model, tokenizer):
   label_map = {0: "negative", 1: "neutral", 2: "positive"}
   return label_map[prediction]
 
-def format_output(text, aspects, sentiments):
+def classify_product(text, model, tokenizer, label_encoder, max_length=32):
+    """
+    Predict the product class for a single input text.
+    Returns the predicted product label and confidence score.
+    """
+    model.eval()
+    inputs = tokenizer(
+        text,
+        return_tensors="pt",
+        truncation=True,
+        padding="max_length",
+        max_length=max_length
+    )
+    with torch.no_grad():
+        outputs = model(**inputs)
+        probs = torch.nn.functional.softmax(outputs.logits, dim=-1)
+        pred_idx = torch.argmax(probs, dim=-1).item()
+    predicted_product = label_encoder.inverse_transform([pred_idx])[0]
+    return predicted_product
+
+""" REMOVE THE FUNCTION AFTER APPLYING CHANGES """
+def format_output(text, aspects, sentiments, product):
   print(f"Text: {text}")
   print(f"Found {len(aspects)} aspects:")
   
   for i, aspect in enumerate(aspects, 1):
-    print(f"  {i}. '{aspect['term']}' -> {sentiments[i-1]}")
+    print(f"  {i}. [{product}] '{aspect['term']}' -> {sentiments[i-1]}")
       
   print("-" * 50)
 
 if __name__ == "__main__":
   AspectModel = BertForTokenClassification.from_pretrained("aspect_extraction_model\checkpoint-12207")
   SentimentModel = BertForSequenceClassification.from_pretrained("absa_model/checkpoint-10456")
+  ClassificationModel = AutoModelForSequenceClassification.from_pretrained("product_classifier")
+  with open(r"product_classifier\label_encoder.pkl", "rb") as f:
+    label_encoder = pickle.load(f)
+
+  """ THIS PART SHOULD BE CHANGED """
   test_data = pd.read_csv(r"C:\Users\HP\Downloads\testing and evaluation\Restaurants_Test_Data_PhaseA.csv")
   test_data = test_data.tail(5)
   for _ , row in test_data.iterrows():
     aspects = aspects_extraction(row['Sentence'], AspectModel, tokenizer_asp)
+    product = classify_product(row["Sentence"], ClassificationModel, tokenizer_cls, label_encoder)
     sentiments = []
     for _, aspect in enumerate(aspects):
       s = classify_sentiment(row['Sentence'], aspect['term'], SentimentModel, tokenizer_sent)
       sentiments.append(s)
-    format_output(row['Sentence'], aspects, sentiments)
+    format_output(row['Sentence'], aspects, sentiments, product)
