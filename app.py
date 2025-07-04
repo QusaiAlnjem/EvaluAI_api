@@ -43,9 +43,9 @@ def load_models():
     tokenizer_cls = AutoTokenizer.from_pretrained("roberta-base")
     
     # Load models
-    AspectModel = BertForTokenClassification.from_pretrained("models/aspect_extraction_model")
-    SentimentModel = BertForSequenceClassification.from_pretrained("models/absa_model")
-    ClassificationModel = AutoModelForSequenceClassification.from_pretrained("models/product_classifier")
+    AspectModel = BertForTokenClassification.from_pretrained("absa_model/checkpoint-10456")
+    SentimentModel = BertForSequenceClassification.from_pretrained("aspect_extraction_model/checkpoint-16276")
+    ClassificationModel = AutoModelForSequenceClassification.from_pretrained("product_classifier")
 
     logger.info("Models loaded successfully!")
       
