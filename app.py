@@ -130,7 +130,7 @@ def health_check():
           AspectModel is not None,
           SentimentModel is not None,
           ClassificationModel is not None,
-      ]),
+      ])},
       'individual_models': {
           'tokenizer_sent': tokenizer_sent is not None,
           'tokenizer_asp': tokenizer_asp is not None,
