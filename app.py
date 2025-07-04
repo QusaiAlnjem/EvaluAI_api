@@ -223,7 +223,7 @@ def not_found(error):
 def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
-@app.route('/test', methods=['GET'])
+@app.route('/test', methods=['POST'])
 def test_endpoint():
     """Test endpoint to verify functionality"""
     test_review = "I don't feel that touch screen works perfectly"
