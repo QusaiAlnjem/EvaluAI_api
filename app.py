@@ -21,6 +21,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+load_models()
 
 tokenizer_sent = None
 tokenizer_asp = None  
@@ -221,6 +222,5 @@ if __name__ == '__main__':
       logger.error(f"[TEST] Error in direct send: {str(e)}")
   # --- END TEST SCRIPT ---
   # Load models at startup
-  load_models()
   port = int(os.environ.get('PORT', 10000))  # Hugging Face uses port 7860
   app.run(host='0.0.0.0', port=port)
