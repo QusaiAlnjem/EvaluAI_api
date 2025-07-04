@@ -17,8 +17,13 @@ from transformers import (
   AutoTokenizer
 )
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    stream=sys.stdout  # This ensures logs go to stdout
+)
 logger = logging.getLogger(__name__)
+sys.stdout.flush()
 
 app = Flask(__name__)
 load_models()
@@ -39,7 +44,6 @@ def load_models():
       logger.info("Starting model loading...")
       
       # Check if model directories exist
-      import os
       model_paths = [
           "absa_model/checkpoint-10456",
           "aspect_extraction_model/checkpoint-16276", 
