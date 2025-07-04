@@ -223,15 +223,17 @@ def not_found(error):
 def internal_error(error):
     return jsonify({'error': 'Internal server error'}), 500
 
-if __name__ == '__main__':
-    # Test data for direct send (no GET/POST request needed)
-    # --- BEGIN TEST SCRIPT ---
+@app.route('/test', methods=['GET'])
+def test_endpoint():
+    """Test endpoint to verify functionality"""
     test_review = "I don't feel that touch screen works perfectly"
     try:
         result = process_request([{'Review': test_review}])
         target_url = "https://assured-goshawk-topical.ngrok-free.app/api/v0.1/reviews"
         aspects = result.get('aspects', [])
         sentiments = result.get('sentiments', [])
+        responses = []
+        
         for idx, aspect in enumerate(aspects):
             sentiment_str = sentiments[idx] if idx < len(sentiments) else ""
             if sentiment_str == "positive":
@@ -242,12 +244,14 @@ if __name__ == '__main__':
                 sentiment_val = 3
             else:
                 sentiment_val = 0
+                
             payload = {
                 "customerId": 1,
                 "productId": 1,
                 "topic": aspect.get('term', ""),
                 "sentiment": sentiment_val,
             }
+            
             logger.info(f"[TEST] Sending payload to {target_url}: {payload}")
             response = requests.post(
                 target_url,
@@ -258,9 +262,23 @@ if __name__ == '__main__':
                 }
             )
             logger.info(f"[TEST] Response status: {response.status_code}, content: {response.text}")
+            responses.append({
+                "payload": payload,
+                "status": response.status_code,
+                "response": response.text
+            })
+            
+        return jsonify({
+            "test_review": test_review,
+            "result": result,
+            "responses": responses
+        })
+        
     except Exception as e:
-        logger.error(f"[TEST] Error in direct send: {str(e)}")
-    # --- END TEST SCRIPT ---
-    # Load models at startup
-    port = int(os.environ.get('PORT', 10000))  # Hugging Face uses port 7860
-    app.run(host='0.0.0.0', port=port)
+        logger.error(f"[TEST] Error in test endpoint: {str(e)}")
+
+        return jsonify({"error": str(e)}), 500
+      
+if __name__ == '__main__':
+  port = int(os.environ.get('PORT', 10000))  # Hugging Face uses port 7860
+  app.run(host='0.0.0.0', port=port)
